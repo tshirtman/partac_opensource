@@ -1,0 +1,491 @@
+#:import A kivy.animation.Animation
+#:import glob glob.glob
+#:import F kivy.factory.Factory
+#:import sin math.sin
+#:import cos math.cos
+#:import reduce functools.reduce
+#:import RGBA kivy.utils.rgba
+
+<Widget>:
+    visible: True
+    visible_targets:
+        {
+        True: {
+        'opacity': 1,
+        },
+        False: {
+        'opacity': 0,
+        }
+        }
+    on_visible:
+        A.cancel_all(self, 'opacity')
+        A(d=.3, t='out_quad', **self.visible_targets[self.visible]).start(self)
+
+<Page@Screen>:
+    index: 0
+    on_enter:
+        self.index = 0
+
+
+<ImagePage@Page>:
+    anim_delay: 1/60
+    image: ''
+    image_opacity: 1
+    background_color: '#00000000'
+
+    Image:
+        source: root.image
+        size_hint: None, None
+        size: [min(wh) for wh in zip(root.size, self.texture_size)]
+        pos_hint: {'center': (.5, .5)}
+        anim_delay: root.anim_delay
+        opacity: root.image_opacity
+
+        canvas.before:
+            Color:
+                rgba: RGBA(root.background_color)
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+
+<VBox@BoxLayout>:
+    orientation: 'vertical'
+    size_hint: .5, None
+    height: self.minimum_height
+    pos_hint: {'center': (.5, .5)}
+    spacing: '20dp'
+
+<PVBox@VBox>:
+    min: 0
+    index: 0
+    size_hint_x: 1
+    max: self.min + len(self.children)
+    visible: self.min <= self.index < self.max
+
+<Logo>:
+    transitions: {'pos': 'out_quad', 'size': 'out_elastic'}
+    size: [max(150, min(300, wh)) for wh in img.texture_size]
+    size_hint: None, None
+    image_center: 0, 0
+    Image:
+        id: img
+        source: root.source
+        visible: True
+        center: root.image_center
+        allow_stretch: True
+
+
+<ShaderPage@Page>:
+    source: ''
+    ShaderWidget:
+        source: root.source
+
+
+<ShaderWidget>:
+    canvas:
+        Color:
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+<Label>:
+    font_name: '/usr/share/fonts/truetype/lato/Lato-Black.ttf'
+
+
+<Title@Label>:
+    font_size: app.title_font_size
+    color: app.title_color
+    size_hint: None, None
+    size: self.texture_size
+    pos_hint: {'center_x': .5}
+    font_name: '/usr/share/fonts/truetype/gentium/Gentium-R.ttf'
+
+
+<Paragraph@Label>:
+    text_size: self.size[0], None
+    color: app.paragraph_color
+    size_hint_y: None
+    height: self.texture_size[1]
+    font_size: app.paragraph_font_size
+
+
+<LogoPage@Page>:
+    logos: glob('logos/*.png')
+
+    StackLayout:
+        id: sl
+        padding: '20dp'
+        spacing: '20dp'
+        sources: root.logos[:root.index]
+        images:
+            [
+            F.Logo.get(source, image_center=self.center)
+            for source in
+            self.sources
+            ]
+        on_images:
+            self.clear_widgets()
+            for img in self.images: self.add_widget(img)
+            removed = [key for key in F.Logo._cache if key not in self.sources]
+            for img in removed: F.Logo._cache.pop(img)
+
+        canvas.before:
+            Color:
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: 50, 50, 50, 50
+
+    Paragraph:
+        text: '… and millions more'
+        visible: root.index > len(root.logos)
+        color: 0, 0, 0, 1
+        font_size: 2 * app.paragraph_font_size
+        size_hint: .5, None
+        text_size: None, None
+        size: self.texture_size
+        pos_hint: {'x': .5, 'y': .1}
+
+FloatLayout:
+    points1:
+        reduce(lambda x, y: x + y, zip(
+        [app.origins[0][0] + cos(app.angles[0] * i) * 250 for i in range(8)],
+        [app.origins[0][1] + sin(app.angles[0] * i) * 250 for i in range(8)]))
+    points2:
+        reduce(lambda x, y: x + y, zip(
+        [app.origins[1][0] + cos(app.angles[1] * i) * 250 for i in range(8)],
+        [app.origins[1][1] + sin(app.angles[1] * i) * 250 for i in range(8)]))
+    points3:
+        reduce(lambda x, y: x + y, zip(
+        [app.origins[2][0] + cos(app.angles[2] * i) * 250 for i in range(8)],
+        [app.origins[2][1] + sin(app.angles[2] * i) * 250 for i in range(8)]))
+
+    canvas.before:
+        Color:
+            rgba: app.background_color
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+        Color:
+            rgba: app.colors[0]
+        Line:
+            points: root.points1 + root.points1[:2] if root.points1 else []
+            width: 5
+
+        Color:
+            rgba: app.colors[1]
+        Line:
+            points: root.points2 + root.points2[:2] if root.points2 else []
+            width: 5
+
+        Color:
+            rgba: app.colors[2]
+        Line:
+            points: root.points3 + root.points3[:2] if root.points3 else []
+            width: 5
+
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 50
+        Title:
+            text: sm.current
+
+        ScreenManager:
+            id: sm
+
+            Page:
+                name: 'What is Open Source'
+
+            LogoPage:
+                name: 'Examples'
+
+            Page:
+                id: page_what
+                name: 'Sure, but what IS Open Source?'
+
+                BoxLayout:
+                    FloatLayout:
+                        PVBox:
+                            id: what_sp1
+                            index: page_what.index
+                            Paragraph:
+                                text: 'Definitions:'
+                            Paragraph:
+                                visible: page_what.index > what_sp1.min + 0
+                                text: '• Intellectual property & Copyright'
+                            Paragraph:
+                                visible: page_what.index > what_sp1.min + 1
+                                text: '• Licenses'
+
+                        PVBox:
+                            id: what_sp2
+                            min: what_sp1.max
+                            index: page_what.index
+                            Paragraph:
+                                text: 'Philosophy'
+                            Paragraph:
+                                visible: page_what.index > what_sp2.min + 0
+                                text: '• The ethics of software and freedom'
+                            Paragraph:
+                                visible: page_what.index > what_sp2.min + 1
+                                text: '  0) freedom to use the software for any purpose'
+                            Paragraph:
+                                visible: page_what.index > what_sp2.min + 2
+                                text: '  1) freedom to study how the program works and change it to fit your needs'
+                            Paragraph:
+                                visible: page_what.index > what_sp2.min + 3
+                                text: '  2) freedom to share the software to help others'
+                            Paragraph:
+                                visible: page_what.index > what_sp2.min + 4
+                                text: '  3) freedom to share your modified versions of the software'
+
+                        PVBox:
+                            id: what_sp3
+                            min: what_sp2.max
+                            index: page_what.index
+                            Paragraph:
+                                text: 'Politics'
+                            Paragraph:
+                                visible: page_what.index > what_sp3.min + 0
+                                text: '• Should freedom enforce freedom?'
+                            Paragraph:
+                                visible: page_what.index > what_sp3.min + 1
+                                text: '  the GPL family (GPL/LGPL/AGPL…)'
+                            Paragraph:
+                                visible: page_what.index > what_sp3.min + 2
+                                text: '• Coexistence with proprietary software.'
+                            Paragraph:
+                                visible: page_what.index > what_sp3.min + 3
+                                text: '  MIT'
+                            Paragraph:
+                                visible: page_what.index > what_sp3.min + 4
+                                text: '  BSD'
+                            Paragraph:
+                                visible: page_what.index > what_sp3.min + 5
+                                text: '  Apache'
+                            Paragraph:
+                                visible: page_what.index > what_sp3.min + 6
+                                text: '  Mozilla Public License'
+                            Paragraph:
+                                visible: page_what.index > what_sp3.min + 7
+                                text: '  and a bazillion others…'
+
+                    ScreenManager:
+                        id: what_pics
+                        current: str(page_what.index) if str(page_what.index) in self.screen_names else self.current
+                        Screen:
+                            name: str(what_sp1.min + 0)
+                        ImagePage:
+                            name: str(what_sp1.min + 1)
+                            image: 'images/2/220px-Mickey_Mouse.png'
+                        ImagePage:
+                            name: str(what_sp1.min + 2)
+                            image: 'images/2/788396.jpg'
+
+                        Screen:
+                            name: str(what_sp2.min + 0)
+                        ImagePage:
+                            name: str(what_sp2.min + 1)
+                            image: 'images/2/428px-Richard_Stallman_pointing_out_problems,_October_16,_2007.jpg'
+
+                        Screen:
+                            name: str(what_sp3.min + 0)
+                        ImagePage:
+                            name: str(what_sp3.min + 1)
+                            image: 'images/2/1024px-Copyleft.svg.png'
+                        ImagePage:
+                            name: str(what_sp3.min + 2)
+                            image: 'images/2/gpl3.png'
+                        Screen:
+                            name: str(what_sp3.min + 3)
+                        ImagePage:
+                            name: str(what_sp3.min + 4)
+                            image: 'images/2/1920px-MIT_logo.svg.png'
+                        ImagePage:
+                            name: str(what_sp3.min + 5)
+                            image: 'images/2/BSD_wordmark.svg.png'
+                        ImagePage:
+                            name: str(what_sp3.min + 6)
+                            image: 'images/2/Apache_Software_Foundation_Logo_(2016).svg.png'
+                        ImagePage:
+                            name: str(what_sp3.min + 7)
+                            image: 'images/2/1920px-Mozilla_logo.svg.png'
+
+            Page:
+                name: 'Practice'
+                id: page_practice
+                BoxLayout:
+                    FloatLayout:
+                        PVBox:
+                            id: practice_sp1
+                            index: page_practice.index
+                            Paragraph:
+                                text: 'Business Model (or lackthereof)'
+                            Paragraph:
+                                visible: page_practice.index > practice_sp1.min + 0
+                                text: '• Build and share'
+                            Paragraph:
+                                visible: page_practice.index > practice_sp1.min + 1
+                                text: '  Open sourced by Rackspace and NASA, OpenStack is now contributed to by dozens of companies'
+
+                            Paragraph:
+                                visible: page_practice.index > practice_sp1.min + 2
+                                text: '• Support & Consulting'
+                            Paragraph:
+                                visible: page_practice.index > practice_sp1.min + 3
+                                text: '   founded in 1994, RedHat was the first "billion dollar" free software company (in revenue)'
+                            Paragraph:
+                                visible: page_practice.index > practice_sp1.min + 4
+                                text: '   …bought by IBM for 34 Billions in 2018'
+                            Paragraph:
+                                visible: page_practice.index > practice_sp1.min + 5
+                                text: '• Passion'
+                            Paragraph:
+                                visible: page_practice.index > practice_sp1.min + 6
+                                text: '  A lot of free software happens because people love to build them'
+
+                        PVBox:
+                            id: practice_sp2
+                            min: practice_sp1.max
+                            index: page_practice.index
+                            Paragraph:
+                                text: 'Community'
+                            Paragraph:
+                                visible: page_practice.index > practice_sp2.min + 0
+                                text: '• A World Wide collaboration'
+                            Paragraph:
+                                visible: page_practice.index > practice_sp2.min + 1
+                                text: '• Communication'
+
+                        PVBox:
+                            id: practice_sp3
+                            min: practice_sp2.max
+                            index: page_practice.index
+                            Paragraph:
+                                text: 'Process'
+                            Paragraph:
+                                visible: page_practice.index > practice_sp3.min + 0
+                                text: '• How free software happens'
+                            Paragraph:
+                                visible: page_practice.index > practice_sp3.min + 1
+                                text: '• Working in the open'
+
+                        PVBox:
+                            id: practice_sp4
+                            min: practice_sp3.max
+                            index: page_practice.index
+                            Paragraph:
+                                text: 'Roles'
+                            Paragraph:
+                                visible: page_practice.index > practice_sp4.min + 0
+                                text: '• Developer'
+                            Paragraph:
+                                visible: page_practice.index > practice_sp4.min + 1
+                                text: '• User'
+                            Paragraph:
+                                visible: page_practice.index > practice_sp4.min + 2
+                                text: '• Bug reports and triaging'
+                            Paragraph:
+                                visible: page_practice.index > practice_sp4.min + 3
+                                text: '• Documentation'
+                            Paragraph:
+                                visible: page_practice.index > practice_sp4.min + 4
+                                text: '• Supporter'
+
+                    ScreenManager:
+                        id: practice_pics
+                        size_hint_x: .5
+                        current: str(page_practice.index) if str(page_practice.index) in self.screen_names else self.current
+
+                        Screen:
+                            name: str(practice_sp1.min + 0)
+                        ImagePage:
+                            name: str(practice_sp1.min + 1)
+                            image: 'images/3/chain.gif'
+                        ImagePage:
+                            name: str(practice_sp1.min + 2)
+                            image: 'images/3/OpenStack-Logo-Horizontal.png'
+                            background_color: '#FFFFFF'
+                        ImagePage:
+                            name: str(practice_sp1.min + 3)
+                            image: 'images/3/1920px-RedHat.svg.png'
+                            background_color: '#FFFFFF'
+                        Screen:
+                            name: str(practice_sp1.min + 4)
+                        ImagePage:
+                            name: str(practice_sp1.min + 7)
+                            image: 'images/3/opensource-love.png'
+
+                        Screen:
+                            name: str(practice_sp2.min + 0)
+                        ImagePage:
+                            name: str(practice_sp2.min + 1)
+                            image: 'images/4/debian_planet.png'
+
+                        Screen:
+                            name: str(practice_sp3.min + 0)
+                        ImagePage:
+                            name: str(practice_sp3.min + 1)
+                            image: 'images/3/opensource_guides.png'
+                        ImagePage:
+                            name: str(practice_sp3.min + 2)
+                            image: 'images/3/opensource_guides.png'
+
+                        Screen:
+                            name: str(practice_sp4.min + 0)
+                        ImagePage:
+                            name: str(practice_sp4.min + 1)
+                            image: 'images/3/developer.gif'
+                        ImagePage:
+                            name: str(practice_sp4.min + 2)
+                            image: 'images/3/user.gif'
+                        ImagePage:
+                            name: str(practice_sp4.min + 3)
+                            image: 'images/3/documentation.gif'
+                        ImagePage:
+                            name: str(practice_sp4.min + 4)
+                            image: 'images/3/tipping.gif'
+
+            Page:
+                id: personal_page
+                name: 'Personnal experience'
+
+                ScreenManager:
+                    current: str(personal_page.index) if str(personal_page.index) in self.screen_names else self.current
+                    transition: F.SlideTransition(direction='up')
+                    ImagePage:
+                        name: '0'
+                        image: 'images/4/projects.png'
+                    ImagePage:
+                        name: '1'
+                        image: 'images/4/contribs.png'
+                    ImagePage:
+                        name: '2'
+                        image: 'images/4/community.png'
+                    ImagePage:
+                        name: '3'
+                        image: 'images/4/sharing.png'
+                        
+
+            ImagePage:
+                name: 'Questions?'
+                image: 'images/questions.gif'
+                image_opacity: sin(app.time / 5) * .5 + .5
+
+                canvas.before:
+                    Color:
+                        rgba: 0, 0, 0, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+            Page:
+                name: "No really, that's all I have"
+
+        Label:
+            text: app.clocktime
+            size_hint_y: None
+            height: self.texture_size[1]
+
