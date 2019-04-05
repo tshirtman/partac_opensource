@@ -23,7 +23,7 @@
 
 <Page@Screen>:
     index: 0
-    on_enter:
+    on_pre_enter:
         self.index = 0
 
 
@@ -45,8 +45,8 @@
             Color:
                 rgba: RGBA(root.background_color)
             Rectangle:
-                pos: self.pos
-                size: self.size
+                pos: self.center_x - self.norm_image_size[0] / 2, self.center_y - self.norm_image_size[1] / 2
+                size: self.norm_image_size
 
 
 <VBox@BoxLayout>:
@@ -62,6 +62,7 @@
     size_hint_x: 1
     max: self.min + len(self.children)
     visible: self.min <= self.index < self.max
+    pos_hint: {'top': .8}
 
 <Logo>:
     transitions: {'pos': 'out_quad', 'size': 'out_elastic'}
@@ -303,12 +304,15 @@ FloatLayout:
                         ImagePage:
                             name: str(what_sp3.min + 4)
                             image: 'images/2/1920px-MIT_logo.svg.png'
+                            background_color: '#FFFFFF'
                         ImagePage:
                             name: str(what_sp3.min + 5)
                             image: 'images/2/BSD_wordmark.svg.png'
+                            background_color: '#FFFFFF'
                         ImagePage:
                             name: str(what_sp3.min + 6)
                             image: 'images/2/Apache_Software_Foundation_Logo_(2016).svg.png'
+                            background_color: '#FFFFFF'
                         ImagePage:
                             name: str(what_sp3.min + 7)
                             image: 'images/2/1920px-Mozilla_logo.svg.png'
@@ -423,6 +427,9 @@ FloatLayout:
                         ImagePage:
                             name: str(practice_sp2.min + 1)
                             image: 'images/4/debian_planet.png'
+                        ImagePage:
+                            name: str(practice_sp2.min + 2)
+                            image: 'images/4/communication.png'
 
                         Screen:
                             name: str(practice_sp3.min + 0)
@@ -431,7 +438,7 @@ FloatLayout:
                             image: 'images/3/opensource_guides.png'
                         ImagePage:
                             name: str(practice_sp3.min + 2)
-                            image: 'images/3/opensource_guides.png'
+                            image: 'images/3/open.png'
 
                         Screen:
                             name: str(practice_sp4.min + 0)
@@ -450,7 +457,7 @@ FloatLayout:
 
             Page:
                 id: personal_page
-                name: 'Personnal experience'
+                name: 'Personal experience'
 
                 ScreenManager:
                     current: str(personal_page.index) if str(personal_page.index) in self.screen_names else self.current
@@ -466,7 +473,10 @@ FloatLayout:
                         image: 'images/4/community.png'
                     ImagePage:
                         name: '3'
-                        image: 'images/4/sharing.png'
+                        image: 'images/5/kivy-team.jpg'
+                    ImagePage:
+                        name: '4'
+                        image: 'images/5/fosdem.jpg'
                         
 
             ImagePage:
